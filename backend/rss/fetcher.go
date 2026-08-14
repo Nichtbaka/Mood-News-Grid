@@ -8,6 +8,8 @@ import (
 
 	"mood-news-app/backend/models"
 
+	"html"
+
 	"github.com/google/uuid"
 	"github.com/mmcdole/gofeed"
 )
@@ -56,7 +58,16 @@ func FetchLatestNews(ctx context.Context, feedURL string, limit int) ([]models.N
 }
 
 func stripHTML(input string) string {
-	re := regexp.MustCompile("<[^>]*>")
-	cleaned := re.ReplaceAllString(input, "")
+	decoded := html.UnescapeString(input)
+
+	reEntities := regexp.MustCompile(`&[a-zA-Z0-9]+;?`)
+	decoded = reEntities.ReplaceAllString(decoded, " ")
+	reTags := regexp.MustCompile(`<[^>]*>`)
+	cleaned := reTags.ReplaceAllString(decoded, " ")
+
+	cleaned = strings.ReplaceAll(cleaned, "\u00a0", " ")
+	reSpaces := regexp.MustCompile(`\s+`)
+	cleaned = reSpaces.ReplaceAllString(cleaned, " ")
+
 	return strings.TrimSpace(cleaned)
 }
